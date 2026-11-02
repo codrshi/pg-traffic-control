@@ -10,6 +10,10 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class DbzFlightListener {
 
+    // SourceRecord = kafka connect data structure representing record produced by the source connector.
+    // SourceRecord contains Source partition, source offset, topic name, key, value (change event payload), headers
+
+    // RecordChangeEvent = debezium wrapper around SourceRecord
     public void handleFlight(RecordChangeEvent<SourceRecord> flight) {
         SourceRecord sourceRecord = flight.record();
 
