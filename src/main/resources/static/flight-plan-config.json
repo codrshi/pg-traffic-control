@@ -1,0 +1,37 @@
+
+{
+  "clientId": "client-101",
+  "flightPlanName": "Inventory Audit Flight",
+
+  "origin": {
+    "type": "POSTGRESQL",
+    "host": "source-db.client.com",
+    "port": 5432,
+    "database": "business_db",
+    "schema": "public",
+    "username": "cdc_reader",
+    "passwordSecretRef": "secret://client-101/source-db"
+  },
+
+  "captureManifest": [
+    {
+      "schema": "public",
+      "table": "inventory_items"
+    },
+    {
+      "schema": "public",
+      "table": "orders"
+    }
+  ],
+
+  "destination": {
+    "type": "POSTGRESQL",
+    "host": "audit-db.client.com",
+    "port": 5432,
+    "database": "audit_db",
+    "schema": "audit",
+    "table": "change_audit",
+    "username": "audit_writer",
+    "passwordSecretRef": "secret://client-101/audit-db"
+  }
+}

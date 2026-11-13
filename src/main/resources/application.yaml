@@ -1,14 +1,27 @@
 spring:
   application:
     name: pg-traffic-control
+  kafka:
+    bootstrap-servers: localhost:9092
+  datasource:
+    url: jdbc:postgresql://localhost:5432/pg_traffic_control
+    username: admin
+    password: mysecretpassword
+    driver-class-name: org.postgresql.Driver
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+  jpa:
+    hibernate:
+      ddl-auto: validate
 
 debezium:
   datasource:
     host: localhost
     port: 5432
     user: postgres
-    password:
-    database: pg-traffic-control
+    password: mysecretpassword
+    database: pg_traffic_control
   offset:
     storage:
       file:
