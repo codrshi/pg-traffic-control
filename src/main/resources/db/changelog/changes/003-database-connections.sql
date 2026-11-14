@@ -1,4 +1,3 @@
-
 --liquibase formatted sql
 
 --changeset flight-platform:003-create-database-connections
@@ -28,10 +27,10 @@ CREATE TABLE database_connections (
     -- only postgres supported as of now
     CONSTRAINT chk_database_type CHECK (database_type IN ('POSTGRES')),
 
-
     CONSTRAINT chk_connection_details_keys CHECK (
         jsonb_typeof(connection_details) = 'object' AND
-        connection_details ?& ARRAY['host', 'port', 'database_name', 'username', 'password', 'ssl_mode']),
+        jsonb_exists_all(connection_details, ARRAY['host', 'port', 'database_name', 'username', 'password', 'ssl_mode'])
+        ),
 
     CONSTRAINT chk_connection_port CHECK ((connection_details->>'port')::INTEGER BETWEEN 1 AND 65535),
 

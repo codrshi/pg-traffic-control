@@ -6,7 +6,7 @@ CREATE TABLE flight_plans (
     -- each client/operator can setup multiple flight plans
 
     id UUID PRIMARY KEY,
-    client_id UUID NOT NULL,
+    flight_operator_id UUID NOT NULL,
     name VARCHAR(200) NOT NULL,
 
     -- status of flight plan. It doesnt reflects runtime status of flights
@@ -15,7 +15,7 @@ CREATE TABLE flight_plans (
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT fk_flight_plans_client FOREIGN KEY (client_id) REFERENCES clients(id),
+    CONSTRAINT fk_flight_plans_client FOREIGN KEY (flight_operator_id) REFERENCES flight_operators(id),
 
     -- draft: plan is just created
     -- validating: the platform is validating plan (origin db, destination db, permission, tables)
@@ -24,7 +24,7 @@ CREATE TABLE flight_plans (
     -- paused:  operator/platform has paused it
     -- failed: validation failed
     -- decommissioned: permanently deleted
-    CONSTRAINT chk_plan_status CHECK (status IN ('DRAFT', 'VALIDATING', 'READY', 'ACTIVE', 'PAUSED', 'FAILED', 'DECOMMISSIONED')),
+    CONSTRAINT chk_plan_status CHECK (status IN ('DRAFT', 'VALIDATING', 'READY', 'ACTIVE', 'PAUSED', 'FAILED', 'DECOMMISSIONED'))
 );
 
-CREATE INDEX idx_flight_plans_client ON flight_plans(client_id);
+CREATE INDEX idx_flight_plans_client ON flight_plans(flight_operator_id);

@@ -9,4 +9,4 @@ databaseChangeLog:
       file: db/changelog/changes/003-database-connections.sql
 
   - include:
-      file: db/changelog/changes/004-capture-targets.sql
+      file: db/changelog/changes/004-capture-runways.sql

@@ -1,3 +1,5 @@
+debug: true
+
 spring:
   application:
     name: pg-traffic-control
@@ -5,21 +7,25 @@ spring:
     bootstrap-servers: localhost:9092
   datasource:
     url: jdbc:postgresql://localhost:5432/pg_traffic_control
-    username: admin
+    username: flight_admin
     password: mysecretpassword
     driver-class-name: org.postgresql.Driver
   liquibase:
     enabled: true
-    change-log: classpath:db/changelog/db.changelog-master.yaml
+    change-log: classpath:db/changelog/changelog-master.yaml
   jpa:
     hibernate:
       ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
 
 debezium:
   datasource:
     host: localhost
     port: 5432
-    user: postgres
+    user: flight_admin
     password: mysecretpassword
     database: pg_traffic_control
   offset:
