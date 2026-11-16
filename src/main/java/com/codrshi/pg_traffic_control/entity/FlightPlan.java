@@ -1,6 +1,6 @@
 package com.codrshi.pg_traffic_control.entity;
 
-import com.codrshi.pg_traffic_control.enums.FlightPlanStatus;
+import com.codrshi.pg_traffic_control.common.enums.FlightPlanStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -60,7 +60,7 @@ public class FlightPlan {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    private List<CaptureRunways> captureTargets = new ArrayList<>();
+    private List<CaptureRunway> captureRunaways = new ArrayList<>();
 
     public void addDatabaseConnection(DatabaseConnection connection) {
         databaseConnections.add(connection);
@@ -72,13 +72,13 @@ public class FlightPlan {
         connection.setFlightPlan(null);
     }
 
-    public void addCaptureTarget(CaptureRunways target) {
-        captureTargets.add(target);
+    public void addCaptureTarget(CaptureRunway target) {
+        captureRunaways.add(target);
         target.setFlightPlan(this);
     }
 
-    public void removeCaptureTarget(CaptureRunways target) {
-        captureTargets.remove(target);
+    public void removeCaptureTarget(CaptureRunway target) {
+        captureRunaways.remove(target);
         target.setFlightPlan(null);
     }
 }

@@ -27,7 +27,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CaptureRunways {
+public class CaptureRunway {
     @Id
     @UuidGenerator(style = UuidGenerator.Style.VERSION_7)
     @Column(name = "id", updatable = false, nullable = false)

@@ -1,8 +1,8 @@
 package com.codrshi.pg_traffic_control.entity;
 
 
-import com.codrshi.pg_traffic_control.enums.DatabaseType;
-import com.codrshi.pg_traffic_control.enums.DbConnectionRole;
+import com.codrshi.pg_traffic_control.common.enums.DatabaseType;
+import com.codrshi.pg_traffic_control.common.enums.DbConnectionRole;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;

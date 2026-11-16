@@ -8,7 +8,7 @@ CREATE TABLE database_connections (
 
     -- identifies whether connection represents origin DB or source DB
     connection_role VARCHAR(20) NOT NULL,
-    database_type VARCHAR(30) NOT NULL,
+    database_type VARCHAR(30) NOT NULL DEFAULT 'POSTGRESQL',
     connection_details JSONB NOT NULL,
 
     -- default destination DB schema where audit records can be stored
@@ -25,7 +25,7 @@ CREATE TABLE database_connections (
     CONSTRAINT chk_connection_role CHECK (connection_role IN ('ORIGIN', 'DESTINATION')),
 
     -- only postgres supported as of now
-    CONSTRAINT chk_database_type CHECK (database_type IN ('POSTGRES')),
+    CONSTRAINT chk_database_type CHECK (database_type IN ('POSTGRESQL')),
 
     CONSTRAINT chk_connection_details_keys CHECK (
         jsonb_typeof(connection_details) = 'object' AND

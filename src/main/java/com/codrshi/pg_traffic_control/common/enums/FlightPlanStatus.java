@@ -1,4 +1,4 @@
-package com.codrshi.pg_traffic_control.enums;
+package com.codrshi.pg_traffic_control.common.enums;
 
 public enum FlightPlanStatus {
     DRAFT,
