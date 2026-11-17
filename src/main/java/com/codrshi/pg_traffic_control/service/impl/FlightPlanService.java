@@ -81,7 +81,7 @@ public class FlightPlanService implements IFlightPlanService {
         flightOperator.addFlightPlan(flightPlan);
         FlightPlan savedFlightPlan = flightPlanRepository.saveAndFlush(flightPlan);
 
-        return null;
+        return buildResponse(savedFlightPlan);
     }
 
     private FlightOperator retrieveAndValidateOperator(String clientKey) {
@@ -130,5 +130,16 @@ public class FlightPlanService implements IFlightPlanService {
         }
 
         return captureRunways;
+    }
+
+    private static FlightPlanResponse buildResponse(FlightPlan flightPlan) {
+        return FlightPlanResponse.builder()
+                .planId(flightPlan.getId())
+                .planName(flightPlan.getName())
+                .status(flightPlan.getStatus())
+                .version(flightPlan.getVersion())
+                .createdAt(flightPlan.getCreatedAt())
+                .updatedAt(flightPlan.getUpdatedAt())
+                .build();
     }
 }
