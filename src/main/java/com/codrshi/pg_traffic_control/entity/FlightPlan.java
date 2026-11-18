@@ -4,9 +4,11 @@ import com.codrshi.pg_traffic_control.common.enums.FlightPlanStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SourceType;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,13 +42,13 @@ public class FlightPlan {
     @Column(name = "version", nullable = false)
     private Integer version = 1;
 
-    @CreationTimestamp
+    @CreationTimestamp(source = SourceType.DB)
     @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
+    private Instant createdAt;
 
-    @UpdateTimestamp
+    @UpdateTimestamp(source = SourceType.DB)
     @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt;
+    private Instant updatedAt;
 
     @OneToMany(
             mappedBy = "flightPlan",
@@ -80,5 +82,29 @@ public class FlightPlan {
     public void removeCaptureTarget(CaptureRunway target) {
         captureRunaways.remove(target);
         target.setFlightPlan(null);
+    }
+
+    public static class FlightPlanBuilder {
+        public FlightPlan build() {
+            FlightPlan plan = new FlightPlan(
+                    id,
+                    flightOperator,
+                    name,
+                    status != null ? status : FlightPlanStatus.DRAFT,
+                    version != null ? version : 1,
+                    createdAt,
+                    updatedAt,
+                    new ArrayList<>(),
+                    new ArrayList<>()
+            );
+
+            if (this.databaseConnections != null) {
+                this.databaseConnections.forEach(plan::addDatabaseConnection);
+            }
+            if (this.captureRunaways != null) {
+                this.captureRunaways.forEach(plan::addCaptureTarget);
+            }
+            return plan;
+        }
     }
 }

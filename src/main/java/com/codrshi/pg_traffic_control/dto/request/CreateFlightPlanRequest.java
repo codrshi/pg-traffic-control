@@ -22,7 +22,7 @@ public record CreateFlightPlanRequest(
  * {
  *   "name": "Inventory Audit Flight",
  *   "originConnectionUrl": "jdbc:postgresql://user:pass@host:5432/db?sslmode=require",
- *   "destinationConnectionUrl" "jdbc:postgresql://user:pass@host:5432/db?sslmode=require"
+ *   "destinationConnectionUrl": "jdbc:postgresql://user:pass@host:5432/db?sslmode=require",
  *   "defaultAuditTable": "audit.change_audit",
  *   "runaways": [
  *     {

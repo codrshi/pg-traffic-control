@@ -6,7 +6,7 @@ import com.codrshi.pg_traffic_control.common.enums.FlightOperatorStatus;
 import com.codrshi.pg_traffic_control.common.enums.FlightPlanStatus;
 import com.codrshi.pg_traffic_control.dto.SchemaTable;
 import com.codrshi.pg_traffic_control.dto.request.CreateFlightPlanRequest;
-import com.codrshi.pg_traffic_control.dto.response.FlightPlanResponse;
+import com.codrshi.pg_traffic_control.dto.response.CreateFlightPlanResponse;
 import com.codrshi.pg_traffic_control.entity.CaptureRunway;
 import com.codrshi.pg_traffic_control.entity.DatabaseConnection;
 import com.codrshi.pg_traffic_control.entity.FlightOperator;
@@ -17,10 +17,8 @@ import com.codrshi.pg_traffic_control.repository.FlightOperatorRepository;
 import com.codrshi.pg_traffic_control.repository.FlightPlanRepository;
 import com.codrshi.pg_traffic_control.service.IFlightPlanService;
 import com.codrshi.pg_traffic_control.util.DbConfigResolver;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -41,7 +39,7 @@ public class FlightPlanService implements IFlightPlanService {
 
     @Override
     @Transactional
-    public FlightPlanResponse createPlan(String clientKey, CreateFlightPlanRequest request) {
+    public CreateFlightPlanResponse createPlan(String clientKey, CreateFlightPlanRequest request) {
 
         log.info("Received flight plan creation request with name = {} by operator = {}", request.name(), clientKey);
 
@@ -73,12 +71,12 @@ public class FlightPlanService implements IFlightPlanService {
 
         FlightPlan flightPlan = FlightPlan.builder()
                 .name(planName)
+                .flightOperator(flightOperator)
                 .status(FlightPlanStatus.DRAFT)
                 .databaseConnections(List.of(originDatabaseConnection, destinationDatabaseConnection))
                 .captureRunaways(captureRunaways)
                 .build();
 
-        flightOperator.addFlightPlan(flightPlan);
         FlightPlan savedFlightPlan = flightPlanRepository.saveAndFlush(flightPlan);
 
         return buildResponse(savedFlightPlan);
@@ -112,7 +110,7 @@ public class FlightPlanService implements IFlightPlanService {
             }
 
             SchemaTable departureSchemaTable = DbConfigResolver.resolveSchema(departure);
-            SchemaTable arrivalSchemaTable = DbConfigResolver.resolveSchema(departure);
+            SchemaTable arrivalSchemaTable = DbConfigResolver.resolveSchema(arrival);
 
             CaptureRunway captureRunway = CaptureRunway.builder()
                     .sourceSchema(departureSchemaTable.schema())
@@ -132,8 +130,8 @@ public class FlightPlanService implements IFlightPlanService {
         return captureRunways;
     }
 
-    private static FlightPlanResponse buildResponse(FlightPlan flightPlan) {
-        return FlightPlanResponse.builder()
+    private static CreateFlightPlanResponse buildResponse(FlightPlan flightPlan) {
+        return CreateFlightPlanResponse.builder()
                 .planId(flightPlan.getId())
                 .planName(flightPlan.getName())
                 .status(flightPlan.getStatus())

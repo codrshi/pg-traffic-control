@@ -3,9 +3,11 @@ package com.codrshi.pg_traffic_control.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SourceType;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -50,13 +52,14 @@ public class CaptureRunway {
     private String auditTable;
 
     @Column(name = "enabled", nullable = false)
+    @Builder.Default
     private boolean enabled = true;
 
-    @CreationTimestamp
+    @CreationTimestamp(source = SourceType.DB)
     @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
+    private Instant createdAt;
 
-    @UpdateTimestamp
+    @UpdateTimestamp(source = SourceType.DB)
     @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt;
+    private Instant updatedAt;
 }

@@ -41,7 +41,7 @@ public class DbConfigResolver {
                 Constant.DB_CONN_JSON_COLUMN_DB_NAME, props.getProperty("PGDBNAME"),
                 Constant.DB_CONN_JSON_COLUMN_USERNAME, props.getProperty("user"),
                 Constant.DB_CONN_JSON_COLUMN_PASSWORD, props.getProperty("password"),
-                Constant.DB_CONN_JSON_COLUMN_SSL_MODE, props.getProperty("sslMode")
+                Constant.DB_CONN_JSON_COLUMN_SSL_MODE, props.getProperty("sslmode")
         );
     }
 }

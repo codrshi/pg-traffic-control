@@ -7,10 +7,12 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.SourceType;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -46,10 +48,12 @@ public class DatabaseConnection {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "database_type", nullable = false, length = 30)
-    private DatabaseType databaseType;
+    @Builder.Default
+    private DatabaseType databaseType = DatabaseType.POSTGRESQL;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "connection_details", nullable = false, columnDefinition = "jsonb")
+    @Builder.Default
     private Map<String, Object> connectionDetails = new HashMap<>();
 
     @Column(name = "default_audit_schema", length = 150)
@@ -58,12 +62,12 @@ public class DatabaseConnection {
     @Column(name = "default_audit_table", length = 150)
     private String defaultAuditTable;
 
-    @CreationTimestamp
+    @CreationTimestamp(source = SourceType.DB)
     @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
+    private Instant createdAt;
 
-    @UpdateTimestamp
+    @UpdateTimestamp(source = SourceType.DB)
     @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt;
+    private Instant updatedAt;
 
 }

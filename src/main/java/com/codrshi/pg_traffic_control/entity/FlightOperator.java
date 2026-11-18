@@ -4,9 +4,11 @@ import com.codrshi.pg_traffic_control.common.enums.FlightOperatorStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SourceType;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,13 +37,13 @@ public class FlightOperator {
     @Column(name = "status", nullable = false, length = 20)
     private FlightOperatorStatus status = FlightOperatorStatus.ACTIVE;
 
-    @CreationTimestamp
+    @CreationTimestamp(source = SourceType.DB)
     @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
+    private Instant createdAt;
 
-    @UpdateTimestamp
+    @UpdateTimestamp(source = SourceType.DB)
     @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt;
+    private Instant updatedAt;
 
     @OneToMany(
             mappedBy = "flightOperator",

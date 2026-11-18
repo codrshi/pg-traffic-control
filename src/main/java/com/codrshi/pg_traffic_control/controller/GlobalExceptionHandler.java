@@ -5,6 +5,7 @@ import com.codrshi.pg_traffic_control.exception.ResourceNotFoundException;
 import com.codrshi.pg_traffic_control.exception.UnprocessableContentException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
@@ -25,7 +26,7 @@ import java.util.Optional;
 @Slf4j
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ExceptionHandler(exception = {MethodArgumentNotValidException.class, ConstraintViolationException.class})
     ResponseEntity<?> handleValidationException(MethodArgumentNotValidException ex, HttpServletRequest request){
         List<String> errorMessages = ex.getBindingResult().getFieldErrors().stream()
                 .map(DefaultMessageSourceResolvable::getDefaultMessage)

@@ -1,8 +1,8 @@
 package com.codrshi.pg_traffic_control.service;
 
 import com.codrshi.pg_traffic_control.dto.request.CreateFlightPlanRequest;
-import com.codrshi.pg_traffic_control.dto.response.FlightPlanResponse;
+import com.codrshi.pg_traffic_control.dto.response.CreateFlightPlanResponse;
 
 public interface IFlightPlanService {
-    FlightPlanResponse createPlan(String clientKey, CreateFlightPlanRequest request);
+    CreateFlightPlanResponse createPlan(String clientKey, CreateFlightPlanRequest request);
 }
