@@ -18,13 +18,14 @@ CREATE TABLE flight_plans (
     CONSTRAINT fk_flight_plans_client FOREIGN KEY (flight_operator_id) REFERENCES flight_operators(id),
 
     -- draft: plan is just created
-    -- validating: the platform is validating plan (origin db, destination db, permission, tables)
-    -- ready: plan is ready to use
-    -- active: plan is enabled for execution
-    -- paused:  operator/platform has paused it
-    -- failed: validation failed
+    -- inspecting: the platform is running pre-flight inspection to validate plan (origin db, destination db, permission, tables)
+    -- cleared: plan is ready to use (preflight inspection successful)
+    -- grounded: plan failed in validation (preflight inspection failed)
+    -- airborne: plan is currently executing in CDC engine & monitored by ATC
+    -- paused:  operator/platform has paused the plan execution
+    -- aborted: plan has failed to execute or failed mid-execution
     -- decommissioned: permanently deleted
-    CONSTRAINT chk_plan_status CHECK (status IN ('DRAFT', 'VALIDATING', 'READY', 'ACTIVE', 'PAUSED', 'FAILED', 'DECOMMISSIONED'))
+    CONSTRAINT chk_plan_status CHECK (status IN ('DRAFT', 'INSPECTING', 'CLEARED', 'GROUNDED', 'AIRBORNE', 'PAUSED', 'ABORTED', 'DECOMMISSIONED'))
 );
 
 CREATE INDEX idx_flight_plans_client ON flight_plans(flight_operator_id);
