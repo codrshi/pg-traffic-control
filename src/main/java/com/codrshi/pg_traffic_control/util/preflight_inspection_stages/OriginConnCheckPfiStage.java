@@ -3,6 +3,7 @@ package com.codrshi.pg_traffic_control.util.preflight_inspection_stages;
 import com.codrshi.pg_traffic_control.common.Constant;
 import com.codrshi.pg_traffic_control.common.enums.DbConnectionRole;
 import com.codrshi.pg_traffic_control.common.enums.PfiFailureCode;
+import com.codrshi.pg_traffic_control.dto.PreflightInspectionContext;
 import com.codrshi.pg_traffic_control.entity.CaptureRunway;
 import com.codrshi.pg_traffic_control.entity.DatabaseConnection;
 import com.codrshi.pg_traffic_control.entity.FlightPlan;
@@ -29,17 +30,17 @@ public class OriginConnCheckPfiStage extends PreflightInspectionStage {
     }
 
     @Override
-    public void inspect(FlightPlan flightPlan, List<PfiFailureCode> failures) {
+    public void inspect(PreflightInspectionContext preflightInspectionContext, List<PfiFailureCode> failures) {
         log.info("INSPECTION STAGE: Validating origin network connection & privileges.");
 
-        DatabaseConnection originConn = flightPlan.getDatabaseConnections().stream()
+        DatabaseConnection originConn = preflightInspectionContext.databaseConnections().stream()
                 .filter(conn -> DbConnectionRole.ORIGIN.equals(conn.getConnectionRole()))
                 .findFirst().orElse(null);
 
         if (originConn == null) {
-            log.warn("missing origin connection details for flightPlanId = {}", flightPlan.getId());
+            log.warn("missing origin connection details for flightPlanId = {}", preflightInspectionContext.planId());
             if(nextPfiStage != null) {
-                nextPfiStage.inspect(flightPlan, failures);
+                nextPfiStage.inspect(preflightInspectionContext, failures);
             }
             return;
         }
@@ -47,14 +48,14 @@ public class OriginConnCheckPfiStage extends PreflightInspectionStage {
         try (Connection connection = DbUtil.openConnection(originConn.getConnectionDetails())) {
             validateLogicalReplication(connection, failures);
             validateReplicationCapacity(connection, failures);
-            validateSourceTables(connection, flightPlan.getCaptureRunaways(), failures);
-            validatePublicationConfiguration(connection, originConn.getConnectionDetails(), flightPlan.getCaptureRunaways(), failures);
+            validateSourceTables(connection, preflightInspectionContext.captureRunways(), failures);
+            validatePublicationConfiguration(connection, originConn.getConnectionDetails(), preflightInspectionContext.captureRunways(), failures);
         } catch (Exception e) {
             log.warn("Encountered unknown error in {}: {}", this.getClass().getSimpleName(), e.getMessage(), e);
             addFailureCode(failures, PfiFailureCode.DB_CONN_HANDSHAKE_FAILED);
         } finally {
             if(nextPfiStage != null) {
-                nextPfiStage.inspect(flightPlan, failures);
+                nextPfiStage.inspect(preflightInspectionContext, failures);
             }
         }
     }

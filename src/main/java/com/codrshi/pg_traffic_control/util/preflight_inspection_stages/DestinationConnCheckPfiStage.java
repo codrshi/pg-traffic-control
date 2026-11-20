@@ -3,6 +3,7 @@ package com.codrshi.pg_traffic_control.util.preflight_inspection_stages;
 import com.codrshi.pg_traffic_control.common.Constant;
 import com.codrshi.pg_traffic_control.common.enums.DbConnectionRole;
 import com.codrshi.pg_traffic_control.common.enums.PfiFailureCode;
+import com.codrshi.pg_traffic_control.dto.PreflightInspectionContext;
 import com.codrshi.pg_traffic_control.entity.CaptureRunway;
 import com.codrshi.pg_traffic_control.entity.DatabaseConnection;
 import com.codrshi.pg_traffic_control.entity.FlightPlan;
@@ -26,29 +27,29 @@ public class DestinationConnCheckPfiStage extends PreflightInspectionStage {
     }
 
     @Override
-    public void inspect(FlightPlan flightPlan, List<PfiFailureCode> failures) {
+    public void inspect(PreflightInspectionContext preflightInspectionContext, List<PfiFailureCode> failures) {
         log.info("INSPECTION STAGE: Validating destination network connection & privileges.");
 
-        DatabaseConnection destinationConn = flightPlan.getDatabaseConnections().stream()
+        DatabaseConnection destinationConn = preflightInspectionContext.databaseConnections().stream()
                 .filter(conn -> DbConnectionRole.DESTINATION.equals(conn.getConnectionRole()))
                 .findFirst().orElse(null);
 
         if (destinationConn == null) {
-            log.warn("missing destination connection details for flightPlanId = {}", flightPlan.getId());
+            log.warn("missing destination connection details for flightPlanId = {}", preflightInspectionContext.planId());
             if(nextPfiStage != null) {
-                nextPfiStage.inspect(flightPlan, failures);
+                nextPfiStage.inspect(preflightInspectionContext, failures);
             }
             return;
         }
 
         try (Connection connection = DbUtil.openConnection(destinationConn.getConnectionDetails())) {
-            validateDestinationTables(connection, flightPlan.getCaptureRunaways(), failures);
+            validateDestinationTables(connection, preflightInspectionContext.captureRunways(), failures);
         } catch (Exception e) {
             log.warn("Encountered unknown error in {}: {}", this.getClass().getSimpleName(), e.getMessage(), e);
             addFailureCode(failures, PfiFailureCode.DB_CONN_HANDSHAKE_FAILED);
         } finally {
             if(nextPfiStage != null) {
-                nextPfiStage.inspect(flightPlan, failures);
+                nextPfiStage.inspect(preflightInspectionContext, failures);
             }
         }
     }

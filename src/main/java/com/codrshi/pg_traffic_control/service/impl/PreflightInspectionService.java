@@ -3,11 +3,13 @@ package com.codrshi.pg_traffic_control.service.impl;
 import com.codrshi.pg_traffic_control.common.enums.DbConnectionRole;
 import com.codrshi.pg_traffic_control.common.enums.FlightPlanStatus;
 import com.codrshi.pg_traffic_control.common.enums.PfiFailureCode;
+import com.codrshi.pg_traffic_control.dto.PreflightInspectionContext;
 import com.codrshi.pg_traffic_control.dto.PreflightInspectionFailure;
 import com.codrshi.pg_traffic_control.dto.response.PreflightInspectionResponse;
 import com.codrshi.pg_traffic_control.entity.FlightPlan;
 import com.codrshi.pg_traffic_control.exception.ResourceNotFoundException;
 import com.codrshi.pg_traffic_control.repository.FlightPlanRepository;
+import com.codrshi.pg_traffic_control.service.IFlightPlanStateService;
 import com.codrshi.pg_traffic_control.service.IPreflightInspectionService;
 import com.codrshi.pg_traffic_control.util.PreflightInspectionStage;
 import com.codrshi.pg_traffic_control.util.preflight_inspection_stages.CaptureRunawayCountPfiStage;
@@ -26,52 +28,35 @@ import java.util.UUID;
 @Service
 public class PreflightInspectionService implements IPreflightInspectionService {
 
-    @Autowired
-    private FlightPlanRepository flightPlanRepository;
 
     @Autowired
     private PreflightInspectionStage preflightInspectionChain;
 
-    // TODO: use state design pattern to manage flight plan state transitions
+    @Autowired
+    private IFlightPlanStateService flightPlanStateService;
+
     @Override
-    @Transactional
     public PreflightInspectionResponse inspectPlan(UUID flightPlanId) {
 
-        FlightPlan flightPlan = retrieveAndValidatePlan(flightPlanId);
+        PreflightInspectionContext preflightInspectionContext = flightPlanStateService.startInspection(flightPlanId);
 
-        flightPlan = updatePlanStatus(flightPlan, FlightPlanStatus.INSPECTING);
+        try {
+            List<PfiFailureCode> failures = runPreflightInspection(preflightInspectionContext);
+            FlightPlanStatus inspectionStatus = failures.isEmpty() ? FlightPlanStatus.CLEARED : FlightPlanStatus.GROUNDED;
 
-        List<PfiFailureCode> failures = runPreflightInspection(flightPlan);
-        FlightPlanStatus inspectionStatus = failures.isEmpty()? FlightPlanStatus.CLEARED :FlightPlanStatus.GROUNDED;
-
-        flightPlan = updatePlanStatus(flightPlan, inspectionStatus);
-        return buildResponse(flightPlan.getName(), flightPlan.getStatus(), failures);
+            FlightPlan flightPlan = flightPlanStateService.completeInspection(flightPlanId, inspectionStatus);
+            return buildResponse(flightPlan.getName(), flightPlan.getStatus(), failures);
+        }
+        catch (Exception ex) {
+            flightPlanStateService.completeInspection(flightPlanId, FlightPlanStatus.DRAFT);
+            throw ex;
+        }
     }
 
-    private List<PfiFailureCode> runPreflightInspection(FlightPlan flightPlan) {
+    private List<PfiFailureCode> runPreflightInspection(PreflightInspectionContext preflightInspectionContext) {
         List<PfiFailureCode> failures = new ArrayList<>();
-        preflightInspectionChain.inspect(flightPlan, failures);
+        preflightInspectionChain.inspect(preflightInspectionContext, failures);
         return failures;
-    }
-
-    private FlightPlan retrieveAndValidatePlan(UUID flightPlanId) {
-        FlightPlan flightPlan = flightPlanRepository.findById(flightPlanId)
-                .orElseThrow(() -> new ResourceNotFoundException("No flight plan exist for given ID."));
-
-        if(FlightPlanStatus.DECOMMISSIONED.equals(flightPlan.getStatus())) {
-            throw new IllegalStateException("Flight plan is decommissioned.");
-        }
-
-        if(FlightPlanStatus.INSPECTING.equals(flightPlan.getStatus())) {
-            throw new IllegalStateException("Preflight inspection is ongoing.");
-        }
-
-        return flightPlan;
-    }
-
-    private FlightPlan updatePlanStatus(FlightPlan flightPlan, FlightPlanStatus status) {
-        flightPlan.setStatus(status);
-        return flightPlanRepository.saveAndFlush(flightPlan);
     }
 
     private PreflightInspectionResponse buildResponse(String name, FlightPlanStatus status, List<PfiFailureCode> failures) {

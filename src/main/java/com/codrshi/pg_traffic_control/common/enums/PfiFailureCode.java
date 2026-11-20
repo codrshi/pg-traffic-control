@@ -1,5 +1,8 @@
 package com.codrshi.pg_traffic_control.common.enums;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+@JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public enum PfiFailureCode {
     ORIGIN_CONN_COUNT_INVALID("A flight plan must have exactly one origin connection."),
     DESTINATION_CONN_COUNT_INVALID("A flight plan must have exactly one destination connection."),
@@ -20,6 +23,19 @@ public enum PfiFailureCode {
     ORIGIN_TABLE_OWNERSHIP_MISSING("The origin DB should grant table ownership or owner role for publication_mode = AUTO_FILTERED."),
     ORIGIN_TABLE_INSERT_MISSING("The destination DB should grant INSERT privilege on audit table(s).");
 
+    private final String message;
+
     PfiFailureCode(String message) {
+        this.message = message;
+    }
+
+    // Invoked by Jackson to build JSON response for PreflightInspectionResponse
+    public String getCode() {
+        return this.name();
+    }
+
+    // Invoked by Jackson to build JSON response for PreflightInspectionResponse
+    public String getMessage() {
+        return this.message;
     }
 }

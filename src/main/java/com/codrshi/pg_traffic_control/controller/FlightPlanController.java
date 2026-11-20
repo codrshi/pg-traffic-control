@@ -10,15 +10,13 @@ import com.codrshi.pg_traffic_control.service.IFlightPlanService;
 import com.codrshi.pg_traffic_control.service.IPreflightInspectionService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
@@ -40,10 +38,9 @@ public class FlightPlanController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PostMapping("/v1/inspect")
-    public ResponseEntity<PreflightInspectionResponse> inspectPlan(@RequestParam(name = "flight_plan_id") @NotBlank(message = "flight_plan_id must not be blank") UUID flightPlanId,
-                                                                   @Valid @RequestBody CreateFlightPlanRequest request) {
+    @PostMapping("/v1/inspect/{flight_plan_id}")
+    public ResponseEntity<PreflightInspectionResponse> inspectPlan(@PathVariable(name = "flight_plan_id") @NotNull(message = "flight_plan_id must not be blank") UUID flightPlanId) {
         PreflightInspectionResponse response = preflightInspectionService.inspectPlan(flightPlanId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }

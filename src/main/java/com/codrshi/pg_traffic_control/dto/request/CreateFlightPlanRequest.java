@@ -18,21 +18,19 @@ public record CreateFlightPlanRequest(
         public record Runaway(String departure, String arrival) {}
 }
 
-/**
- * {
- *   "name": "Inventory Audit Flight",
- *   "originConnectionUrl": "jdbc:postgresql://user:pass@host:5432/db?sslmode=require",
- *   "destinationConnectionUrl": "jdbc:postgresql://user:pass@host:5432/db?sslmode=require",
- *   "defaultAuditTable": "audit.change_audit",
- *   "runaways": [
- *     {
- *       "departure": "public.inventory_items",
- *       "arrival": "public.inventory_items_audit"
- *     },
- *     {
- *        "departure": "public.inventory_items",
- *        "arrival": "public.inventory_items_audit"
- *     }
- *  ]
- * }
- */
+// {
+//         "name": "Inventory Audit Flight",
+//         "originConnectionUrl": "jdbc:postgresql://host:5432/db?sslmode=require&user=user&password=pass",
+//         "destinationConnectionUrl": "jdbc:postgresql://host:5432/db?sslmode=require&user=user&password=pass",
+//         "defaultAuditTable": "audit.change_audit",
+//         "runaways": [
+//          {
+//           "departure": "public.inventory_items",
+//           "arrival": "public.inventory_items_audit"
+//          },
+//          {
+//           "departure": "public.orders",
+//           "arrival": "public.orders_audit"
+//          }
+//         ]
+//  }
