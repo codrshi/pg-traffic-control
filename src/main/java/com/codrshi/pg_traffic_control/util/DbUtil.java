@@ -5,11 +5,17 @@ import com.codrshi.pg_traffic_control.dto.SchemaTable;
 import com.codrshi.pg_traffic_control.exception.UnprocessableContentException;
 import org.postgresql.Driver;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 
-public class DbConfigResolver {
+public class DbUtil {
+
+    private static final int CONNECT_TIMEOUT_SECONDS = 5;
+    private static final int SOCKET_TIMEOUT_SECONDS = 8;
 
     public static SchemaTable resolveSchema(String schemaTable) {
 
@@ -43,5 +49,35 @@ public class DbConfigResolver {
                 Constant.DB_CONN_JSON_COLUMN_PASSWORD, props.getProperty("password"),
                 Constant.DB_CONN_JSON_COLUMN_SSL_MODE, props.getProperty("sslmode")
         );
+    }
+
+    public static Connection openConnection(Map<String, Object> config) throws SQLException {
+        String host = config.get(Constant.DB_CONN_JSON_COLUMN_HOST).toString().trim();
+        int port = Integer.parseInt(String.valueOf(config.get(Constant.DB_CONN_JSON_COLUMN_HOST)));
+        String database = config.get(Constant.DB_CONN_JSON_COLUMN_DB_NAME).toString().trim();
+        String username = config.get(Constant.DB_CONN_JSON_COLUMN_USERNAME).toString().trim();
+        String password = config.get(Constant.DB_CONN_JSON_COLUMN_PASSWORD).toString().trim();
+        String sslMode = config.get(Constant.DB_CONN_JSON_COLUMN_SSL_MODE).toString().trim();
+
+        String jdbcUrl = "jdbc:postgresql://" + host + ":" + port + "/" + database;
+
+        Properties properties = new Properties();
+        properties.setProperty("user", username);
+        properties.setProperty("password", password);
+        properties.setProperty("sslmode", sslMode);
+        properties.setProperty(
+                "connectTimeout",
+                String.valueOf(CONNECT_TIMEOUT_SECONDS)
+        );
+        properties.setProperty(
+                "socketTimeout",
+                String.valueOf(SOCKET_TIMEOUT_SECONDS)
+        );
+        properties.setProperty(
+                "ApplicationName",
+                "pg-traffic-control-validation"
+        );
+
+        return DriverManager.getConnection(jdbcUrl, properties);
     }
 }

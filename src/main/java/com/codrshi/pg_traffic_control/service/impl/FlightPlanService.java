@@ -16,7 +16,7 @@ import com.codrshi.pg_traffic_control.exception.UnprocessableContentException;
 import com.codrshi.pg_traffic_control.repository.FlightOperatorRepository;
 import com.codrshi.pg_traffic_control.repository.FlightPlanRepository;
 import com.codrshi.pg_traffic_control.service.IFlightPlanService;
-import com.codrshi.pg_traffic_control.util.DbConfigResolver;
+import com.codrshi.pg_traffic_control.util.DbUtil;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,9 +46,9 @@ public class FlightPlanService implements IFlightPlanService {
         FlightOperator flightOperator = retrieveAndValidateOperator(clientKey);
         log.debug("Resolved flight operator details: {}", flightOperator);
 
-        SchemaTable defaultAuditSchemaTable = DbConfigResolver.resolveSchema(request.defaultAuditTable());
+        SchemaTable defaultAuditSchemaTable = DbUtil.resolveSchema(request.defaultAuditTable());
 
-        Map<String, Object> originConnDetails = DbConfigResolver.resolveConnectionDetails(request.originConnectionUrl());
+        Map<String, Object> originConnDetails = DbUtil.resolveConnectionDetails(request.originConnectionUrl());
         DatabaseConnection originDatabaseConnection = DatabaseConnection.builder()
                 .connectionRole(DbConnectionRole.ORIGIN)
                 .connectionDetails(originConnDetails)
@@ -56,7 +56,7 @@ public class FlightPlanService implements IFlightPlanService {
                 .defaultAuditTable(defaultAuditSchemaTable.table())
                 .build();
 
-        Map<String, Object> destinationConnDetails = DbConfigResolver.resolveConnectionDetails(request.destinationConnectionUrl());
+        Map<String, Object> destinationConnDetails = DbUtil.resolveConnectionDetails(request.destinationConnectionUrl());
         DatabaseConnection destinationDatabaseConnection = DatabaseConnection.builder()
                 .connectionRole(DbConnectionRole.DESTINATION)
                 .connectionDetails(destinationConnDetails)
@@ -109,8 +109,8 @@ public class FlightPlanService implements IFlightPlanService {
                 continue;
             }
 
-            SchemaTable departureSchemaTable = DbConfigResolver.resolveSchema(departure);
-            SchemaTable arrivalSchemaTable = DbConfigResolver.resolveSchema(arrival);
+            SchemaTable departureSchemaTable = DbUtil.resolveSchema(departure);
+            SchemaTable arrivalSchemaTable = DbUtil.resolveSchema(arrival);
 
             CaptureRunway captureRunway = CaptureRunway.builder()
                     .sourceSchema(departureSchemaTable.schema())
