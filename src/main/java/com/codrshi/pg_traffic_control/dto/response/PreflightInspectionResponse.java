@@ -10,6 +10,6 @@ import java.util.List;
 @Builder
 public record PreflightInspectionResponse(String planName,
                                           FlightPlanStatus status,
-                                          List<PfiFailureCode> inspectionFailures )
+                                          List<PreflightInspectionFailure> inspectionFailures )
 {
 }

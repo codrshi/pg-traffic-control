@@ -53,7 +53,7 @@ public class DbUtil {
 
     public static Connection openConnection(Map<String, Object> config) throws SQLException {
         String host = config.get(Constant.DB_CONN_JSON_COLUMN_HOST).toString().trim();
-        int port = Integer.parseInt(String.valueOf(config.get(Constant.DB_CONN_JSON_COLUMN_HOST)));
+        int port = Integer.parseInt(String.valueOf(config.get(Constant.DB_CONN_JSON_COLUMN_PORT)));
         String database = config.get(Constant.DB_CONN_JSON_COLUMN_DB_NAME).toString().trim();
         String username = config.get(Constant.DB_CONN_JSON_COLUMN_USERNAME).toString().trim();
         String password = config.get(Constant.DB_CONN_JSON_COLUMN_PASSWORD).toString().trim();

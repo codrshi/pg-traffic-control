@@ -66,7 +66,7 @@ public class FlightPlanService implements IFlightPlanService {
 
         log.debug("Successfully resolved origin and destination connection details: {}, {}", originConnDetails, destinationConnDetails);
 
-        List<CaptureRunway> captureRunaways = createRunaways(request.runaways(), request.defaultAuditTable());
+        List<CaptureRunway> captureRunaways = createRunaways(request.runaways(), request.defaultAuditTable(), request.publicationName());
         String planName = resolvePlanName(request.name(), originConnDetails.get(Constant.DB_CONN_JSON_COLUMN_DB_NAME), destinationConnDetails.get(Constant.DB_CONN_JSON_COLUMN_DB_NAME));
 
         FlightPlan flightPlan = FlightPlan.builder()
@@ -98,7 +98,7 @@ public class FlightPlanService implements IFlightPlanService {
                 .orElse(String.format(Constant.DEFAULT_PLAN_NAME_TEMPLATE, originDbName, destinationDbName));
     }
 
-    private static List<CaptureRunway> createRunaways(List<CreateFlightPlanRequest.Runaway> runaways, String defaultAuditTable) {
+    private static List<CaptureRunway> createRunaways(List<CreateFlightPlanRequest.Runaway> runaways, String defaultAuditTable, String publicationName) {
         List<CaptureRunway> captureRunways = new ArrayList<>();
 
         for(CreateFlightPlanRequest.Runaway runaway: runaways) {
@@ -115,6 +115,7 @@ public class FlightPlanService implements IFlightPlanService {
             CaptureRunway captureRunway = CaptureRunway.builder()
                     .sourceSchema(departureSchemaTable.schema())
                     .sourceTable(departureSchemaTable.table())
+                    .publicationName(publicationName)
                     .auditSchema(arrivalSchemaTable.schema())
                     .auditTable(arrivalSchemaTable.table())
                     .enabled(true)

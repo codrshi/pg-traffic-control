@@ -67,22 +67,15 @@ public class Constant {
                 ) AS table_is_published
                 """;
 
-    public static final String DB_QUERY_CHECK_CREATE_PUBLICATION_PRIVILEGE = """
-                SELECT has_database_privilege(
-                    current_user, current_database(), 'CREATE'
-                ) AS can_create_publication
-                """;
-
-    public static final String DB_QUERY_CHECK_TABLE_OWNERSHIP =  """
-                SELECT pg_has_role(
-                    current_user, c.relowner, 'MEMBER'
-                ) AS can_manage_table
-                FROM pg_class c
-                JOIN pg_namespace n ON n.oid = c.relnamespace
-                WHERE n.nspname = ?
-                  AND c.relname = ?
-                  AND c.relkind IN ('r', 'p')
-                """;
+    public static final String DB_QUERY_CHECK_TABLE_COLUMNS = """
+        SELECT
+            column_name,
+            is_nullable,
+            data_type
+        FROM information_schema.columns
+        WHERE table_schema = ?
+          AND table_name = ?
+        """;
 
     public static final int QUERY_TIMEOUT_SECONDS = 5;
     public static final String DEFAULT_PLAN_NAME_TEMPLATE = "%s - %s plan";

@@ -45,6 +45,9 @@ public class CaptureRunway {
     @Column(name = "source_table", nullable = false, length = 150)
     private String sourceTable;
 
+    @Column(name = "publication_name", nullable = false, length = 150)
+    private String publicationName;
+
     @Column(name = "audit_schema", length = 150)
     private String auditSchema;
 

@@ -4,6 +4,7 @@ import com.codrshi.pg_traffic_control.common.Constant;
 import com.codrshi.pg_traffic_control.common.enums.DbConnectionRole;
 import com.codrshi.pg_traffic_control.common.enums.PfiFailureCode;
 import com.codrshi.pg_traffic_control.dto.PreflightInspectionContext;
+import com.codrshi.pg_traffic_control.dto.PreflightInspectionFailure;
 import com.codrshi.pg_traffic_control.entity.CaptureRunway;
 import com.codrshi.pg_traffic_control.entity.DatabaseConnection;
 import com.codrshi.pg_traffic_control.entity.FlightPlan;
@@ -30,7 +31,7 @@ public class OriginConnCheckPfiStage extends PreflightInspectionStage {
     }
 
     @Override
-    public void inspect(PreflightInspectionContext preflightInspectionContext, List<PfiFailureCode> failures) {
+    public void inspect(PreflightInspectionContext preflightInspectionContext, List<PreflightInspectionFailure> failures) {
         log.info("INSPECTION STAGE: Validating origin network connection & privileges.");
 
         DatabaseConnection originConn = preflightInspectionContext.databaseConnections().stream()
@@ -49,10 +50,10 @@ public class OriginConnCheckPfiStage extends PreflightInspectionStage {
             validateLogicalReplication(connection, failures);
             validateReplicationCapacity(connection, failures);
             validateSourceTables(connection, preflightInspectionContext.captureRunways(), failures);
-            validatePublicationConfiguration(connection, originConn.getConnectionDetails(), preflightInspectionContext.captureRunways(), failures);
+            validatePublicationConfiguration(connection, preflightInspectionContext.captureRunways(), failures);
         } catch (Exception e) {
             log.warn("Encountered unknown error in {}: {}", this.getClass().getSimpleName(), e.getMessage(), e);
-            addFailureCode(failures, PfiFailureCode.DB_CONN_HANDSHAKE_FAILED);
+            addFailureCode(failures, PfiFailureCode.DB_CONN_HANDSHAKE_FAILED.of("origin"));
         } finally {
             if(nextPfiStage != null) {
                 nextPfiStage.inspect(preflightInspectionContext, failures);
@@ -60,26 +61,26 @@ public class OriginConnCheckPfiStage extends PreflightInspectionStage {
         }
     }
 
-    private void validateLogicalReplication(Connection connection, List<PfiFailureCode> failures) throws SQLException {
+    private void validateLogicalReplication(Connection connection, List<PreflightInspectionFailure> failures) throws SQLException {
 
         try (Statement statement = connection.createStatement()) {
             statement.setQueryTimeout(QUERY_TIMEOUT_SECONDS);
 
             try (ResultSet rs = statement.executeQuery(Constant.DB_QUERY_CHECK_REPLICATION_PRIVILEGE)) {
                 if (!rs.next() || !rs.getBoolean("can_replicate")) {
-                    failures.add(PfiFailureCode.ORIGIN_REPLICATION_PRIVILEGE_MISSING);
+                    failures.add(PfiFailureCode.ORIGIN_REPLICATION_PRIVILEGE_MISSING.of());
                 }
             }
         }
     }
 
-    private void validateReplicationCapacity(Connection connection, List<PfiFailureCode> failures) throws SQLException {
+    private void validateReplicationCapacity(Connection connection, List<PreflightInspectionFailure> failures) throws SQLException {
         try (Statement statement = connection.createStatement()) {
             statement.setQueryTimeout(QUERY_TIMEOUT_SECONDS);
 
             try (ResultSet rs = statement.executeQuery(Constant.DB_QUERY_SHOW_WAL_LEVEL)) {
                 if (!rs.next() || !"logical".equalsIgnoreCase(rs.getString(1))) {
-                    failures.add(PfiFailureCode.ORIGIN_DB_WAL_LEVEL_INVALID);
+                    failures.add(PfiFailureCode.ORIGIN_DB_WAL_LEVEL_INVALID.of());
                 }
             }
         }
@@ -89,7 +90,7 @@ public class OriginConnCheckPfiStage extends PreflightInspectionStage {
 
             try (ResultSet rs = statement.executeQuery(Constant.DB_QUERY_SHOW_MAX_REPLICATION_SLOTS)) {
                 if (!rs.next() || rs.getInt(1) < 1) {
-                    failures.add(PfiFailureCode.ORIGIN_DB_REPLICATION_SLOTS_INVALID);
+                    failures.add(PfiFailureCode.ORIGIN_DB_REPLICATION_SLOTS_INVALID.of());
                 }
             }
         }
@@ -99,20 +100,20 @@ public class OriginConnCheckPfiStage extends PreflightInspectionStage {
 
             try (ResultSet rs = statement.executeQuery(Constant.DB_QUERY_SHOW_MAX_WAL_SENDERS)) {
                 if (!rs.next() || rs.getInt(1) < 1) {
-                    failures.add(PfiFailureCode.ORIGIN_DB_MAX_WAL_SENDERS_INVALID);
+                    failures.add(PfiFailureCode.ORIGIN_DB_MAX_WAL_SENDERS_INVALID.of());
                 }
             }
         }
 
     }
 
-    private void validateSourceTables(Connection connection, List<CaptureRunway> runaways, List<PfiFailureCode> failures) throws SQLException {
+    private void validateSourceTables(Connection connection, List<CaptureRunway> runaways, List<PreflightInspectionFailure> failures) throws SQLException {
         for (CaptureRunway runaway : runaways) {
             if (!runaway.isEnabled()) {
                 continue;
             }
 
-            String qualifiedName = runaway.getSourceSchema() + ":" + runaway.getSourceTable();
+            String qualifiedName = runaway.getSourceSchema() + "." + runaway.getSourceTable();
 
             try (PreparedStatement statement = connection.prepareStatement(Constant.DB_QUERY_CHECK_SELECT_PRIVILEGE)) {
 
@@ -126,48 +127,28 @@ public class OriginConnCheckPfiStage extends PreflightInspectionStage {
                     rs.next();
 
                     if (!rs.getBoolean("table_exists")) {
-                        failures.add(PfiFailureCode.DB_TABLE_NOT_FOUND);
+                        failures.add(PfiFailureCode.DB_TABLE_NOT_FOUND.of(qualifiedName, "origin"));
                         continue;
                     }
                     if (!rs.getBoolean("can_use_schema")) {
-                        failures.add(PfiFailureCode.DB_SCHEMA_USAGE_MISSING);
+                        failures.add(PfiFailureCode.DB_SCHEMA_USAGE_MISSING.of("origin", qualifiedName));
                     }
                     if (!rs.getBoolean("can_select")) {
-                        failures.add(PfiFailureCode.ORIGIN_TABLE_SELECT_MISSING);
+                        failures.add(PfiFailureCode.ORIGIN_TABLE_SELECT_MISSING.of(qualifiedName));
                     }
                 }
             }
         }
     }
 
-    private void validatePublicationConfiguration(Connection connection, Map<String, Object> config, List<CaptureRunway> runaways, List<PfiFailureCode> failures) throws SQLException {
-        if (config.get("publication_mode") == null) {
-            failures.add(PfiFailureCode.ORIGIN_DB_PUBLICATION_MODE_INVALID);
-            return;
-        }
-
-        String publicationMode = config.get("publication_mode").toString().trim();
-
-        switch (publicationMode.toUpperCase(Locale.ROOT)) {
-            case "MANUAL" -> validateManualPublication(connection, config, runaways, failures);
-            case "AUTO_FILTERED" -> validateAutomaticPublication(connection, runaways, failures);
-            default -> failures.add(PfiFailureCode.ORIGIN_DB_PUBLICATION_MODE_INVALID);
-        }
-    }
-
-    private void validateManualPublication(Connection connection, Map<String, Object> config, List<CaptureRunway> runaways, List<PfiFailureCode> failures) throws SQLException {
-        if (config.get("publication_name") == null) {
-            failures.add(PfiFailureCode.ORIGIN_DB_PUBLICATION_NAME_MISSING);
-            return;
-        }
-
-        String publicationName = config.get("publication_name").toString().trim();
-
+    private void validatePublicationConfiguration(Connection connection, List<CaptureRunway> runaways, List<PreflightInspectionFailure> failures) throws SQLException {
         for (CaptureRunway runaway : runaways) {
+            String qualifiedName = runaway.getSourceSchema() + "." + runaway.getSourceTable();
+
             try (PreparedStatement statement = connection.prepareStatement(Constant.DB_QUERY_CHECK_PUBLICATION_TABLES)) {
 
                 statement.setQueryTimeout(QUERY_TIMEOUT_SECONDS);
-                statement.setString(1, publicationName);
+                statement.setString(1, runaway.getPublicationName());
                 statement.setString(2, runaway.getSourceSchema());
                 statement.setString(3, runaway.getSourceTable());
 
@@ -175,37 +156,7 @@ public class OriginConnCheckPfiStage extends PreflightInspectionStage {
                     rs.next();
 
                     if (!rs.getBoolean("table_is_published")) {
-                        failures.add(PfiFailureCode.ORIGIN_TABLE_NOT_IN_PUBLICATION);
-                    }
-                }
-            }
-        }
-    }
-
-    private void validateAutomaticPublication(Connection connection, List<CaptureRunway> runaways, List<PfiFailureCode> failures) throws SQLException {
-
-        try (Statement statement = connection.createStatement()) {
-            statement.setQueryTimeout(QUERY_TIMEOUT_SECONDS);
-
-            try (ResultSet rs = statement.executeQuery(Constant.DB_QUERY_CHECK_CREATE_PUBLICATION_PRIVILEGE)) {
-                rs.next();
-
-                if (!rs.getBoolean("can_create_publication")) {
-                    failures.add(PfiFailureCode.ORIGIN_DB_CREATE_PUBLICATION_MISSING_PRIVILEGE);
-                }
-            }
-        }
-
-        for (CaptureRunway runaway : runaways) {
-            try (PreparedStatement statement = connection.prepareStatement(Constant.DB_QUERY_CHECK_TABLE_OWNERSHIP)) {
-
-                statement.setQueryTimeout(QUERY_TIMEOUT_SECONDS);
-                statement.setString(1, runaway.getSourceSchema());
-                statement.setString(2, runaway.getSourceTable());
-
-                try (ResultSet rs = statement.executeQuery()) {
-                    if (!rs.next() || !rs.getBoolean("can_manage_table")) {
-                        failures.add(PfiFailureCode.ORIGIN_TABLE_OWNERSHIP_MISSING);
+                        failures.add(PfiFailureCode.ORIGIN_TABLE_NOT_IN_PUBLICATION.of(qualifiedName));
                     }
                 }
             }

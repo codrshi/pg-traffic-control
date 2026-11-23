@@ -4,6 +4,7 @@ import com.codrshi.pg_traffic_control.common.enums.DatabaseType;
 import com.codrshi.pg_traffic_control.common.enums.DbConnectionRole;
 import com.codrshi.pg_traffic_control.common.enums.PfiFailureCode;
 import com.codrshi.pg_traffic_control.dto.PreflightInspectionContext;
+import com.codrshi.pg_traffic_control.dto.PreflightInspectionFailure;
 import com.codrshi.pg_traffic_control.entity.DatabaseConnection;
 import com.codrshi.pg_traffic_control.entity.FlightPlan;
 import com.codrshi.pg_traffic_control.util.PreflightInspectionStage;
@@ -18,14 +19,14 @@ public class DbTypeCheckPfiStage extends PreflightInspectionStage {
     }
 
     @Override
-    public void inspect(PreflightInspectionContext preflightInspectionContext, List<PfiFailureCode> failures) {
+    public void inspect(PreflightInspectionContext preflightInspectionContext, List<PreflightInspectionFailure> failures) {
         log.info("INSPECTION STAGE: Validating database types of connections.");
 
         boolean hasNonPostgresDb = preflightInspectionContext.databaseConnections().stream()
                 .anyMatch(conn -> !DatabaseType.POSTGRESQL.equals(conn.getDatabaseType()));
 
         if(hasNonPostgresDb) {
-            addFailureCode(failures, PfiFailureCode.UNSUPPORTED_DATABASE_TYPE);
+            addFailureCode(failures, PfiFailureCode.UNSUPPORTED_DATABASE_TYPE.of());
         }
 
         if(nextPfiStage != null) {

@@ -1,4 +1,6 @@
 package com.codrshi.pg_traffic_control.dto;
 
-public record PreflightInspectionFailure(String code,
+import com.codrshi.pg_traffic_control.common.enums.PfiFailureCode;
+
+public record PreflightInspectionFailure(PfiFailureCode code,
                                          String message) { }

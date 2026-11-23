@@ -2,6 +2,7 @@ package com.codrshi.pg_traffic_control.util;
 
 import com.codrshi.pg_traffic_control.common.enums.PfiFailureCode;
 import com.codrshi.pg_traffic_control.dto.PreflightInspectionContext;
+import com.codrshi.pg_traffic_control.dto.PreflightInspectionFailure;
 
 import java.util.List;
 
@@ -12,9 +13,9 @@ public abstract class PreflightInspectionStage {
         this.nextPfiStage = nextPfiStage;
     }
 
-    public void addFailureCode(List<PfiFailureCode> failures, PfiFailureCode failureCode) {
-        failures.add(failureCode);
+    public void addFailureCode(List<PreflightInspectionFailure> failures, PreflightInspectionFailure failure) {
+        failures.add(failure);
     }
 
-    public abstract void inspect(PreflightInspectionContext preflightInspectionContext, List<PfiFailureCode> failures);
+    public abstract void inspect(PreflightInspectionContext preflightInspectionContext, List<PreflightInspectionFailure> failures);
 }

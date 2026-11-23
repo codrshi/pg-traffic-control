@@ -7,7 +7,7 @@ CREATE TABLE capture_runways (
     flight_plan_id UUID NOT NULL,
     source_schema VARCHAR(150) NOT NULL,
     source_table VARCHAR(150) NOT NULL,
-
+    publication_name VARCHAR(150) NOT NULL,
     -- optional destination DB schema override for audit
     audit_schema VARCHAR(150),
     -- optional destination DB table override for audit
