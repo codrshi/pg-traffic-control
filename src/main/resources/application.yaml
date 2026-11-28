@@ -7,6 +7,23 @@ spring:
     name: pg-traffic-control
   kafka:
     bootstrap-servers: localhost:9092
+    # KAFKA_AUTO_CREATE_TOPICS_ENABLE = false
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 5
+        linger.ms: 10
+        request.timeout.ms: 30000
+        delivery.timeout.ms: 120000
+        compression.type: zstd
+      consumer:
+        auto-offset-reset: earliest
+        enable-auto-commit: false
+        key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
   datasource:
     url: jdbc:postgresql://localhost:5432/pg_traffic_control
     username: flight_admin
@@ -41,4 +58,16 @@ debezium:
       internal:
         file:
           filename: ./schema_history.dat
+
+app:
+  kafka:
+    topics:
+      pgtc-flight-topic-v0:
+        name: pgtc-flight-v0
+        partition: 3
+        replicas: 1
+      pgtc-radar-topic-v0:
+        name: pgtc-radar-v0
+        partition: 5
+        replicas: 1
 

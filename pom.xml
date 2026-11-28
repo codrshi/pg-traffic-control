@@ -28,7 +28,7 @@
 	</scm>
 	<properties>
 		<java.version>25</java.version>
-		<debezium.io.version>3.7.0.Final</debezium.io.version>
+		<debezium.io.version>3.7.1.Final</debezium.io.version>
 		<lombok.version>1.18.48</lombok.version>
 	</properties>
 	<dependencies>
@@ -43,6 +43,10 @@
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.kafka</groupId>
+			<artifactId>connect-api</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -67,7 +71,11 @@
 			<artifactId>debezium-connector-postgres</artifactId>
 			<version>${debezium.io.version}</version>
 		</dependency>
-
+		<dependency>
+			<groupId>io.debezium</groupId>
+			<artifactId>debezium-storage-jdbc</artifactId>
+			<version>${debezium.io.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>

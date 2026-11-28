@@ -1,16 +1,20 @@
-package com.codrshi.pg_traffic_control.debezium;
+package com.codrshi.pg_traffic_control.debezium.impl;
 
+import com.codrshi.pg_traffic_control.debezium.IDbzFlightListener;
 import com.codrshi.pg_traffic_control.kafka.IFlightCaptureService;
-import io.debezium.engine.ChangeEvent;
+import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.RecordChangeEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.UUID;
+
 @Service
 @Slf4j
-public class DbzFlightListener {
+public class DbzFlightListener implements IDbzFlightListener {
 
     @Autowired
     private IFlightCaptureService flightCaptureService;
@@ -19,15 +23,24 @@ public class DbzFlightListener {
     // SourceRecord contains Source partition, source offset, topic name, key, value (change event payload), headers
 
     // RecordChangeEvent = debezium wrapper around SourceRecord
-    public void handleFlight(RecordChangeEvent<SourceRecord> flight) {
-        SourceRecord sourceRecord = flight.record();
+    @Override
+    public void handleFlight(List<RecordChangeEvent<SourceRecord>> flights, DebeziumEngine.RecordCommitter<RecordChangeEvent<SourceRecord>> committer, UUID flightPlanId) throws InterruptedException {
+        for (RecordChangeEvent<SourceRecord> flight : flights) {
+            SourceRecord sourceRecord = flight.record();
 
-        if (sourceRecord != null && sourceRecord.value() != null) {
-            log.info("Flight Captured: {}", sourceRecord);
+            if (sourceRecord != null && sourceRecord.value() != null) {
+                log.info("Flight Captured: {}", sourceRecord);
 
-            // business logic
-            flightCaptureService.capture(sourceRecord.toString());
+                // Blocks until Kafka ACKs; markProcessed skipped in case of error
+                flightCaptureService.capture(sourceRecord, flightPlanId);
+
+                // debezium commits offset
+                committer.markProcessed(flight);
+            }
         }
+
+        // flush to offset table in postgres after batch completion.
+        committer.markBatchFinished();
     }
 
 
